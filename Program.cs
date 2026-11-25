@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 
 // One name = one small value type. No separate Models/ folder needed.
 readonly record struct Person(string First, string Last)
@@ -89,11 +90,76 @@ class Program
     }
 
     static void ParallelMergeSort(Person[] a, Person[] buffer, int lo, int hi, int depth)
-        => throw new NotImplementedException();
+    {
+        const int MinParallelSize = 8192;
+        int maxDepth = (int)Math.Log2(Environment.ProcessorCount);
+
+        // Base case: zero or one element is already sorted
+        if (hi - lo <= 1)
+            return;
+
+        // Use sequential sorting for smaller partitions
+        // or when we've reached the parallel depth limit
+        if (hi - lo <= MinParallelSize || depth >= maxDepth)
+        {
+            SequentialMergeSort(a, buffer, lo, hi);
+            return;
+        }
+
+        // Split into two halves
+        int mid = lo + (hi - lo) / 2;
+
+        // Sort both halves concurrently
+        Parallel.Invoke(
+            () => ParallelMergeSort(a, buffer, lo, mid, depth + 1),
+            () => ParallelMergeSort(a, buffer, mid, hi, depth + 1)
+        );
+
+        // Merge once both halves finish
+        Merge(a, buffer, lo, mid, hi);
+    }
 
     static void SequentialMergeSort(Person[] a, Person[] buffer, int lo, int hi)
-        => throw new NotImplementedException();
+    {
+        // Base case: zero or one element
+        if (hi - lo <= 1)
+            return;
+
+        // Divide into two halves
+        int mid = lo + (hi - lo) / 2;
+
+        // Sort each half sequentially
+        SequentialMergeSort(a, buffer, lo, mid);
+        SequentialMergeSort(a, buffer, mid, hi);
+
+        // Merge sorted halves
+        Merge(a, buffer, lo, mid, hi);
+    }
 
     static void Merge(Person[] a, Person[] buffer, int lo, int mid, int hi)
-        => throw new NotImplementedException();
+    {
+        int i = lo;   // Left half index
+        int j = mid;  // Right half index
+        int k = lo;   // Buffer index
+
+        // Merge both sorted halves
+        while (i < mid && j < hi)
+        {
+            if (CompareNames(a[i], a[j]) <= 0)
+                buffer[k++] = a[i++];
+            else
+                buffer[k++] = a[j++];
+        }
+
+        // Copy remaining elements from left half
+        while (i < mid)
+            buffer[k++] = a[i++];
+
+        // Copy remaining elements from right half
+        while (j < hi)
+            buffer[k++] = a[j++];
+
+        // Copy merged results back into original array
+        Array.Copy(buffer, lo, a, lo, hi - lo);
+    }
 }
