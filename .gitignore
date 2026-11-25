@@ -1,0 +1,23 @@
+# .NET build output
+bin/
+obj/
+
+# IDE / Editor files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Build artifacts
+*.dll
+*.exe
+*.pdb
+
+# Test / coverage output
+TestResults/
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
